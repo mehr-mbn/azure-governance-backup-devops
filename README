@@ -1,0 +1,35 @@
+# Azure Governance, Backup & DevOps Pipeline Automation
+
+This repository contains a structured 3-phase Azure project designed to demonstrate end-to-end cloud governance, platform resilience, and DevOps automation.
+
+## Project Phases
+
+### **Phase 1 – Governance with Azure Policy (Completed)**
+Focuses on establishing Azure-wide tagging standards, enforcing tagging compliance, and combining `append` and `deny` custom policies.
+
+→ Documentation: [`phase1-governance/README.md`](phase1-governance/README.md)  
+→ Evidence & CLI output: [`docs/phase1-governance-tests.md`](docs/phase1-governance-tests.md)
+
+---
+
+### **Phase 2 – Backup & Restore with Recovery Services Vault (Planned)**
+Covers VM backup, restore workflows, and RPO/RTO analysis.
+
+→ Documentation: `phase2-backup/README.md` (coming soon)
+
+---
+
+### **Phase 3 – CI/CD with Azure DevOps + Key Vault Integration (Planned)**
+Implements secure pipelines for IaC and application workloads with secret management.
+
+→ Documentation: `phase3-devops/README.md` (coming soon)
+
+---
+
+## Repository Structure
+
+```text
+phase1-governance/     # Phase 1 policies + scripts + documentation
+phase2-backup/         # Phase 2 backup & restore (coming soon)
+phase3-devops/         # Phase 3 CI/CD automation (coming soon)
+docs/                  # Detailed evidence for each phase
