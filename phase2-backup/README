@@ -1,0 +1,70 @@
+# Phase 2 – Backup & Restore with Recovery Services Vault
+
+This phase demonstrates how to protect a production-like VM with Azure Backup and validate that you can actually restore it. The focus is on **end-to-end behaviour**.
+
+---
+
+## Objectives
+
+- Deploy a **Recovery Services Vault** in the governance resource group  
+- Enable backup for a Linux VM using **Azure CLI**  
+- Trigger an on-demand backup and verify the created **recovery point**  
+- Restore the VM as a **new instance** and confirm that the restore completes successfully  
+- Capture real **backup/restore durations** for RPO/RTO discussions
+
+Detailed commands and screenshots are documented in:
+
+> [`docs/phase2-backup-tests.md`](../docs/phase2-backup-tests.md)
+
+---
+
+## Architecture (Phase 2 Scope)
+
+**Region**
+
+- `canadacentral`
+
+**Resource groups and key resources**
+
+| Resource group        | Resource type            | Name                     | Purpose                              |
+|-----------------------|--------------------------|--------------------------|--------------------------------------|
+| `rg-app-dev-canada`   | Virtual machine          | `vm-backup-demo`         | Primary workload VM (backup source)  |
+| `rg-app-dev-canada`   | Virtual machine          | `vm-backup-demo-restore` | Restored VM from Recovery Services   |
+| `rg-app-dev-canada`   | Storage account (lab)    | `stp2restore…`           | Used during restore tests           |
+| `rg-governance-demo`  | Recovery Services vault  | `rsv-backup-demo`        | Centralized vault for VM backups     |
+
+**Backup policy**
+
+- Policy name: `DefaultPolicy` (Azure built-in)
+- Schedule: daily backup
+- Storage redundancy: **LRS** (Locally Redundant Storage) for lower cost
+
+---
+
+## High-level workflow
+
+1. **Create workload VM**  
+   - Ubuntu VM: `vm-backup-demo` in `rg-app-dev-canada`
+
+2. **Create Recovery Services Vault**  
+   - `rsv-backup-demo` in `rg-governance-demo`  
+   - Configure vault to use **LRS** storage
+
+3. **Enable backup for the VM**  
+   - Use Azure CLI to enable protection for `vm-backup-demo`  
+   - Attach the built-in `DefaultPolicy`
+
+4. **Run an on-demand backup**  
+   - Trigger a backup-now operation for `vm-backup-demo`  
+   - Verify that a **FileSystemConsistent** recovery point is created
+
+5. **Restore to a new VM**  
+   - From the latest recovery point, restore as a **new VM**  
+   - Target VM name: `vm-backup-demo-restore`  
+   - Target resource group: `rg-app-dev-canada`
+
+6. **Interpret RPO/RTO**  
+   - Use backup and restore job durations from the vault  
+   - Combine with VM boot time to discuss realistic RTO  
+   - With daily backups, worst-case RPO ≈ 24 hours, effective RPO is much smaller
+

@@ -12,10 +12,11 @@ Focuses on establishing Azure-wide tagging standards, enforcing tagging complian
 
 ---
 
-### **Phase 2 – Backup & Restore with Recovery Services Vault (Planned)**
-Covers VM backup, restore workflows, and RPO/RTO analysis.
+### **Phase 2 – Backup & Restore with Recovery Services Vault (Completed)**
+Implements VM backup and restore using a Recovery Services Vault, validates recovery points, and derives practical RPO/RTO observations.
 
-→ Documentation: `phase2-backup/README.md` (coming soon)
+→ Documentation: [`phase2-backup/README.md`](phase2-backup/README.md)  
+→ Evidence & screenshots: [`docs/phase2-backup-tests.md`](docs/phase2-backup-tests.md)
 
 ---
 
