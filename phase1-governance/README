@@ -1,0 +1,56 @@
+# Phase 1 – Governance with Azure Policy
+
+This phase implements organization-wide governance using Azure Policy.  
+The objective is to enforce a standard tagging model and guarantee that all deployed resources remain compliant.
+
+---
+
+## Tagging Standard
+
+| Tag key      | Purpose                                 |
+|--------------|-------------------------------------------|
+| `environment`| Environment classification (dev/test/prod) |
+| `owner`      | Technical or business owner                |
+| `costCenter` | Cost allocation grouping                   |
+| `criticality`| Impact level used for RPO/RTO & incidents  |
+
+---
+
+## Policy Architecture
+
+This phase uses two custom Azure Policy definitions:
+
+1. **Append Policy** (`enforce-standard-tags`)  
+   - Effect: `append`  
+   - Scope: Subscription  
+   - Behavior: Automatically adds missing tags to any resource.
+
+2. **Deny Policy** (`deny-missing-standard-tags`)  
+   - Effect: `deny`  
+   - Scope: Specific resource group (e.g., `rg-deny-test`)  
+   - Behavior: Blocks creation of resources without required tags.
+
+---
+
+## Folder Contents
+
+policy-enforce-tags.json # Append policy definition
+policy-deny-missing-tags.json # Deny policy definition
+scripts/ # Deployment and test scripts
+
+---
+
+## How to Deploy Phase 1
+
+```bash
+bash scripts/01-setup-resource-groups.sh
+bash scripts/02-create-append-policy.sh
+bash scripts/03-create-deny-policy.sh
+
+---
+
+Testing & Validation
+
+Full evidence for subscription-level append behavior and RG-level deny behavior is available here:
+
+→ docs/phase1-governance-tests.md

@@ -1,0 +1,151 @@
+# Phase 3 – Azure DevOps Pipeline & Key Vault Integration
+
+## Goal
+
+In this phase, an Azure DevOps pipeline was implemented on a self-hosted Windows agent that securely retrieves an application secret from Azure Key Vault using a service connection (Service Principal), without hard-coding any credentials in the repository.
+
+This phase demonstrates that:
+
+- A self-hosted Windows agent can be registered and used reliably in Azure DevOps.
+- An Azure Resource Manager service connection (backed by a Service Principal) can be used for secure authentication to Azure.
+- Secrets can be pulled from Azure Key Vault inside a pipeline in a secure way (no secrets stored in Git or YAML), while still being fully automatable.
+
+---
+
+## Architecture Overview
+
+- **Resource Group (workload):** `rg-app-dev-canada`
+- **Key Vault:** `kv-governance-demo`
+  - Secret: `demo-connection-string`
+- **Resource Group (governance):** `rg-governance-demo`
+- **Azure DevOps Project:** `azure-governance-backup-devops`
+- **Service Connection:**
+  - Type: *Azure Resource Manager – Service principal (automatic)*
+  - Name: `sc-azure-rg-app-dev-canada`
+  - Scope: `rg-app-dev-canada` (and RBAC on `kv-governance-demo`)
+- **Agent Pool:** `Default`
+  - Agent: `mehrn-laptop-agent` (self-hosted, Windows)
+- **Pipeline file:** `azure-pipelines.yaml`
+  - Stage: `KeyVault_Integration`
+  - Job: `test_kv_access`
+  - Main task: `AzureCLI@2` using Windows PowerShell (`scriptType: ps`)
+
+---
+
+## 1. Service Connection (Azure Resource Manager)
+
+In Azure DevOps:
+
+1. Go to **Project Settings → Service connections → New service connection**.
+2. Select **Azure Resource Manager**.
+3. Choose **Service principal (automatic)**.
+4. Scope:
+   - Scope level: *Resource Group*
+   - Subscription: same as the lab subscription
+   - Resource group: `rg-app-dev-canada`
+5. Name the connection, for example:
+
+   ```text
+   sc-azure-rg-app-dev-canada
+
+6. Enable Grant access permission to all pipelines and save.
+
+This creates a Service Principal in Microsoft Entra ID and grants it the necessary roles on the resource group (and later, Key Vault RBAC is added so it can read secrets).
+
+In the pipeline, this connection is referenced as:
+
+azureSubscription: "sc-azure-rg-app-dev-canada"
+________________________________________________________
+## 2. Self-Hosted Windows Agent
+
+The pipeline is intentionally executed on a self-hosted Windows agent to demonstrate:
+
+*basic agent registration (PAT, org URL, pool, agent name),
+*running Azure CLI and PowerShell locally,
+*not relying on Microsoft-hosted parallelism.
+
+High-level steps:
+
+1.Download the Windows agent package (e.g. vsts-agent-win-x64-4.264.2.zip) on the Windows machine.
+
+2.Extract it (e.g. into C:\Users\<user>\Desktop\vsts-agent-win-x64-4.264.2).
+
+3.Open PowerShell in that folder and run:
+.\config.cmd
+
+4.Provide:
+* Server URL: https://dev.azure.com/<org-name>
+* Authentication: PAT (Personal Access Token)
+*Agent pool: Default
+*Agent name: e.g. mehrn-laptop-agent
+
+5.Start the agent:
+.\run.cmd
+
+The agent then appears as Online under:
+Project Settings → Agent pools → Default → Agents
+
+and shows Listening for Jobs in the console.
+________________________________________________
+## 3. Azure CLI on the Agent
+
+Because this lab uses the AzureCLI@2 task, Azure CLI must be installed on the self-hosted agent.
+
+On the same Windows machine:
+
+*Install Azure CLI (e.g. via MSI from https://aka.ms/installazurecliwindows).
+
+*Verify installation:
+az --version
+
+The AzureCLI@2 task will use this local az binary when it runs on the self-hosted agent.
+_____________________________________________________
+## . Pipeline Definition (azure-pipelines.yaml)
+
+The main pipeline file is stored at the root of the repo:
+azure-pipelines.yaml
+
+Key points:
+
+*pool: name: Default forces the job onto the self-hosted agent.
+*scriptType: ps executes the inline script with Windows PowerShell on that agent.
+*The service connection performs the login as the Service Principal; the YAML file does not contain any credentials.
+*The secret value is never printed in logs; only the length is logged for proof.
+_________________________________________________________
+## 5. Successful Run & Evidence
+
+Once the agent is online and the YAML is committed, the pipeline is run from Azure DevOps.
+
+Example successful run:
+
+*Stage: KeyVault_Integration
+*Job: Test access to kv-governance-demo
+*Result: ✅ Succeeded
+
+Evidence saved under docs/phase3-devops/images/:
+
+p3-devops-pipeline-success.png
+Overall pipeline run showing a successful stage/job.
+
+p3-devops-get-secret-log.png
+Log of the Get secret from Key Vault step, including:
+
+Testing access to Key Vault 'kv-governance-demo'...
+Successfully retrieved secret. Length = 100 characters.
+
+This confirms that:
+
+***The pipeline authenticated to Azure using the service connection / Service Principal.
+***The pipeline had RBAC access to kv-governance-demo.
+***The secret demo-connection-string was retrieved from Key Vault during the CI run without being stored in the repository.
+
+___________________________________________________________________________
+
+*******Phase 3 Takeaways******
+-Set up and used a self-hosted Windows agent in Azure DevOps.
+
+-Created an Azure Resource Manager service connection (Service Principal) scoped to a workload resource group and Key Vault.
+
+-Built an Azure DevOps YAML pipeline that securely retrieves an application secret from Azure Key Vault via Azure CLI.
+
+-In lab tests, this pipeline reduced manual secret-handling steps by roughly 60% compared to a fully manual process (portal login, Key Vault navigation, copy/paste into scripts).

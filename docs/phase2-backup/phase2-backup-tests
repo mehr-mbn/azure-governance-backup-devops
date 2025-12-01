@@ -1,0 +1,137 @@
+# Phase 2 – Backup & Restore Tests (Evidence)
+
+This document captures the concrete steps, commands used to validate Phase 2.
+
+---
+
+## 1. Protection enabled for `vm-backup-demo`
+
+**Goal:** Make sure the VM is actually protected by the vault.
+
+**Key command**
+
+```bash
+az backup item list \
+  --resource-group rg-governance-demo \
+  --vault-name rsv-backup-demo \
+  -o table
+
+--------------
+**Evidence (portal)**
+
+Important fields:
+
+Name: vm-backup-demo
+Resource group: rg-app-dev-canada
+Last Backup Status: Success
+Policy: DefaultPolicy
+Latest restore point: timestamp of last backup
+
+This confirms that the VM is under protection in rsv-backup-demo.
+__________________________________________________________________
+
+## 2. On-demand backup job
+
+**Goal:**  Create a real recovery point on demand.
+
+**Key command**
+
+az backup protection backup-now \
+  --resource-group rg-governance-demo \
+  --vault-name rsv-backup-demo \
+  --container-name "VM;iaasvmcontainerv2;rg-app-dev-canada;vm-backup-demo" \
+  --item-name vm-backup-demo \
+  --retain-until 01-01-2030
+
+--------------
+**Monitoring:**
+
+az backup job list \
+  --resource-group rg-governance-demo \
+  --vault-name rsv-backup-demo \
+  -o table
+
+---------------
+**Evidence (portal – Backup Jobs)**
+
+Highlights:
+
+Operation Backup for vm-backup-demo
+Status: Completed
+Total Duration: ~00:27:17
+
+This duration is later used as part of the RTO discussion.
+________________________________________________________________________
+
+## 3. Recovery point validation
+
+**Goal:**  Prove that a usable recovery point exists.
+
+**Key command**
+
+az backup recoverypoint list \
+  --resource-group rg-governance-demo \
+  --vault-name rsv-backup-demo \
+  --container-name "VM;iaasvmcontainerv2;rg-app-dev-canada;vm-backup-demo" \
+  --item-name vm-backup-demo \
+  -o table
+-------------
+**Evidence:**
+
+Key fields:
+
+Time: timestamp of the backup used for restore
+
+Consistency: FileSystemConsistent
+_________________________________________________________________________
+
+## 4. VM-level restore to vm-backup-demo-restore
+
+**Goal:**  Restore the VM from the vault into a new instance and verify that the operation completes.
+
+Workflow (portal)
+
+Open rsv-backup-demo → Backup items → Azure Virtual Machine
+Select vm-backup-demo
+Choose Restore VM
+Select the latest recovery point
+
+Restore as Create new VM:
+Name: vm-backup-demo-restore
+Resource group: rg-app-dev-canada
+
+Submit and wait for the restore job to complete
+
+**Evidence (portal – Backup Jobs)**
+
+Operation: Restore
+Status: Completed
+Total Duration: ~00:02:15
+
+**Evidence (resource group view)**
+
+You can see:
+vm-backup-demo (original VM)
+vm-backup-demo-restore (restored VM)
+
+Associated NIC, Public IP and OS disk created by the restore
+_______________________________________________________________________
+
+## 5. RPO / RTO notes for this lab
+
+These numbers are observed from the lab, not hard SLAs:
+
+Backup job duration: ~27 minutes
+Restore job duration: ~2 minutes 15 seconds (plus VM boot time)
+
+**RPO**
+
+With the default daily policy (DefaultPolicy), theoretical worst-case RPO ≈ 24 hours.
+
+In this demo, the restore uses the most recent recovery point, so effective data loss would be the time between that backup and the incident.
+
+**RTO**
+
+Lower bound: restore job duration (~2m 15s)
+
+Practical RTO: restore duration + VM boot time + basic application checks on vm-backup-demo-restore

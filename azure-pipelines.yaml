@@ -1,0 +1,30 @@
+trigger:
+- main
+
+pool:
+  name: Default
+
+stages:
+- stage: KeyVault_Integration
+  displayName: "Phase 3 - Key Vault integration test"
+  jobs:
+  - job: test_kv_access
+    displayName: "Test access to kv-governance-demo"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Get secret from Key Vault"
+      inputs:
+        azureSubscription: "sc-azure-rg-app-dev-canada"
+        scriptType: ps
+        scriptLocation: inlineScript
+        failOnStandardError: true
+        inlineScript: |
+          Write-Host "Testing access to Key Vault 'kv-governance-demo'..."
+
+          $secretValue = az keyvault secret show `
+            --vault-name kv-governance-demo `
+            --name demo-connection-string `
+            --query value -o tsv
+
+          $length = $secretValue.Length
+          Write-Host "Successfully retrieved secret. Length = $length characters."

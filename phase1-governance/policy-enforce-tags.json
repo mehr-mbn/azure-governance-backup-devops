@@ -1,0 +1,31 @@
+{
+  "if": {
+    "allOf": [
+      {
+        "field": "type",
+        "notEquals": "Microsoft.Resources/subscriptions/resourceGroups"
+      }
+    ]
+  },
+  "then": {
+    "effect": "append",
+    "details": [
+      {
+        "field": "tags['environment']",
+        "value": "dev"
+      },
+      {
+        "field": "tags['owner']",
+        "value": "mehrnaz"
+      },
+      {
+        "field": "tags['costCenter']",
+        "value": "LAB"
+      },
+      {
+        "field": "tags['criticality']",
+        "value": "low"
+      }
+    ]
+  }
+}

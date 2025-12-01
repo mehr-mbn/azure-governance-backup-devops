@@ -1,0 +1,70 @@
+# Azure Governance, Backup & DevOps Pipeline Automation
+
+End-to-end Azure lab project combining:
+
+- **Governance:** Enforcing tag and cost governance with Azure Policy  
+- **Backup & Restore:** VM protection and recovery using Recovery Services Vault  
+- **DevOps:** Azure DevOps pipeline with Azure Key Vault integration (self-hosted agent)
+
+---
+
+## Repository Structure
+
+├─ README.md                     # Project overview (this file)
+├─ phase1-governance/           # Phase 1 – Azure Policy & tagging
+│  └─ README.md
+├─ phase2-backup/               # Phase 2 – VM backup & restore
+│  └─ README.md
+├─ phase3-devops/               # Phase 3 – DevOps pipeline & Key Vault
+│  └─ README.md
+└─ docs/
+   ├─ phase1-governance-tests/  # Evidence for Phase 1
+   ├─ phase2-backup/            # Evidence for Phase 2
+   └─ phase3-devops/            # Evidence for Phase 3
+-----------------------------------------
+******Phases******
+____________________________________________________________________________
+### Phase 1 – Azure Policy & Tag Governance
+
+Goal: Enforce standard tags and improve cost governance for new deployments.
+
+-Custom Azure Policy definitions to require tags like environment, owner, costCenter, criticality.
+
+-Audit + deny assignments so untagged resources are blocked in governed scopes.
+
+-New deployments in the governed scope reach 100% tag compliance, because untagged resources cannot be created.
+
+➡️ Details: phase1-governance/README.md
+___________________________________________________________________________
+### Phase 2 – VM Backup & Restore (Recovery Services Vault)
+
+Goal: Protect a Linux VM with Azure Backup and validate restore.
+
+-Recovery Services Vault configured for daily VM backups.
+
+-Backup jobs executed and recovery points validated.
+
+-Restore tested into a new VM to confirm end-to-end recovery.
+
+In lab runs, the configuration demonstrated:
+
+    RPO of roughly 24 hours (daily backups)
+
+    RTO of around 20–30 minutes to bring a restored VM online
+
+➡️ Details: phase2-backup/README.md
+__________________________________________________________________________
+### Phase 3 – Azure DevOps Pipeline & Key Vault Integration
+
+Goal: Build a CI pipeline that securely pulls secrets from Azure Key Vault.
+
+-Azure DevOps YAML pipeline running on a self-hosted Windows agent.
+
+-Azure Resource Manager service connection (Service Principal) scoped to the workload resource group and Key Vault.
+
+-Pipeline uses AzureCLI@2 to authenticate and read the demo-connection-string secret from kv-governance-demo without hard-coding credentials in GitHub or YAML.
+
+-In lab tests, automating secret retrieval and release steps reduced manual secret-handling actions by roughly 60% compared to a fully manual workflow (portal login, navigating to Key Vault, copy/paste of secrets).
+
+➡️ Details: phase3-devops/README.md
+___________________________________________________________________________
